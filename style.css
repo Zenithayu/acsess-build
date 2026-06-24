@@ -195,6 +195,12 @@ body {
     box-shadow: inset 3px 0 0 var(--primary);
 }
 
+.nav-item.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .nav-badge {
     margin-left: auto;
     background: var(--primary);
@@ -613,6 +619,12 @@ body {
     background: rgba(255,23,68,0.25);
 }
 
+.btn-action.readonly {
+    background: rgba(136,136,168,0.08);
+    color: var(--text-secondary);
+    cursor: default;
+}
+
 /* ===== TOKEN GRID ===== */
 .token-grid {
     display: flex;
@@ -738,11 +750,8 @@ body {
     font-weight: 600;
 }
 
-.role-badge.fullup { background: rgba(108,60,225,0.2); color: var(--primary-light); }
 .role-badge.reseller { background: rgba(0,200,83,0.15); color: var(--success); }
 .role-badge.owner { background: rgba(255,214,0,0.15); color: var(--warning); }
-.role-badge.ownervip { background: rgba(255,23,68,0.15); color: var(--danger); }
-.role-badge.developer { background: rgba(41,121,255,0.15); color: var(--info); }
 
 /* ===== ADD USER FORM ===== */
 .add-user-form {
@@ -806,6 +815,37 @@ select.form-control {
     color: var(--info);
 }
 
+/* ===== ACCESS CARD ===== */
+.access-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 24px;
+    max-width: 600px;
+}
+
+.access-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.access-label {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.access-value {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.access-actions {
+    margin-top: 16px;
+}
+
 /* ===== SETTINGS ===== */
 .settings-grid {
     display: grid;
@@ -837,6 +877,13 @@ select.form-control {
     padding: 30px;
     color: var(--text-secondary);
     font-size: 14px;
+}
+
+/* ===== INFO BANNER ===== */
+.info-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 /* ===== MODAL ===== */
@@ -966,6 +1013,10 @@ select.form-control {
     .data-table { font-size: 12px; }
     .data-table th, .data-table td { padding: 8px 10px; }
     .add-user-form { max-width: 100%; }
+    .access-item {
+        flex-direction: column;
+        gap: 4px;
+    }
 }
 
 @media (max-width: 480px) {
