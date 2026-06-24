@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AKSAKA BOT BUILD - Panel Manajemen</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div class="app">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="brand-text">
+                <span class="brand-title">AKSAKA</span>
+                <span class="brand-sub">BOT BUILD</span>
+            </div>
+        </div>
+
+        <div class="user-profile" id="userProfile">
+            <div class="user-avatar" id="userAvatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="user-info-sidebar">
+                <span class="user-name-sidebar" id="sidebarUserName">Guest</span>
+                <span class="user-role-sidebar" id="sidebarUserRole">Belum Login</span>
+            </div>
+            <button class="btn-logout-small" id="btnLogoutSmall" style="display:none;" title="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-page="dashboard">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-page="tokens">
+                <i class="fas fa-key"></i>
+                <span>Daftar Token</span>
+                <span class="nav-badge" id="tokenBadge">0</span>
+            </a>
+            <a href="#" class="nav-item" data-page="users">
+                <i class="fas fa-users"></i>
+                <span>Kelola User</span>
+                <span class="nav-badge" id="userBadge">0</span>
+            </a>
+            <a href="#" class="nav-item" data-page="adduser">
+                <i class="fas fa-user-plus"></i>
+                <span>Tambah User</span>
+            </a>
+            <a href="#" class="nav-item" data-page="settings">
+                <i class="fas fa-cog"></i>
+                <span>Pengaturan</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="role-info">
+                <i class="fas fa-shield-alt"></i>
+                <span id="roleLevelDisplay">Role Level: 0</span>
+            </div>
+            <button class="btn-login" id="btnLogin">Login</button>
+        </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="main-header">
+            <button class="btn-menu-toggle" id="btnMenuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="header-title">
+                <h2 id="pageTitle">Dashboard</h2>
+            </div>
+            <div class="header-actions">
+                <button class="btn-refresh" id="btnRefresh" title="Refresh">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="btn-logout-header" id="btnLogoutHeader" style="display:none;">
+                    <i class="fas fa-sign-out-alt"></i> Keluar
+                </button>
+            </div>
+        </header>
+
+        <!-- Pages -->
+        <div class="pages-container">
+
+            <!-- ===== DASHBOARD ===== -->
+            <div class="page active" id="page-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">TOTAL TOKEN</span>
+                            <span class="stat-value" id="totalTokens">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">TOTAL USER</span>
+                            <span class="stat-value" id="totalUsers">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">ROLE LEVEL</span>
+                            <span class="stat-value" id="roleLevel">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <button class="quick-btn primary" id="quickAddToken">
+                        <i class="fas fa-plus"></i> Tambah Token
+                    </button>
+                    <button class="quick-btn success" id="quickAddUser">
+                        <i class="fas fa-user-plus"></i> Tambah User
+                    </button>
+                </div>
+
+                <div class="recent-tokens">
+                    <h3>Token Terbaru</h3>
+                    <div class="token-list" id="recentTokenList">
+                        <div class="empty-state">Belum ada token</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== DAFTAR TOKEN ===== -->
+            <div class="page" id="page-tokens">
+                <div class="page-header">
+                    <h2>Daftar Token</h2>
+                    <span class="page-count" id="tokenCount">0 token</span>
+                    <button class="btn-primary" id="btnAddToken">
+                        <i class="fas fa-plus"></i> Tambah Token
+                    </button>
+                </div>
+                <div class="token-grid" id="tokenGrid">
+                    <div class="empty-state">Belum ada token</div>
+                </div>
+                <div class="token-hint">
+                    <i class="fas fa-info-circle"></i>
+                    Hapus token: klik <span class="icon-example">✖</span> di samping token (min. Reseller)
+                </div>
+            </div>
+
+            <!-- ===== KELOLA USER ===== -->
+            <div class="page" id="page-users">
+                <div class="page-header">
+                    <h2>Kelola User</h2>
+                    <span class="page-count" id="userCount">0 user</span>
+                    <div class="header-actions-inline">
+                        <button class="btn-secondary" id="btnRefreshUsers">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <button class="btn-primary" id="btnAddUserPage">
+                            <i class="fas fa-user-plus"></i> Tambah User
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>NAMA</th>
+                                <th>ROLE</th>
+                                <th>TOKEN</th>
+                                <th>AKSI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center">Belum ada user</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ===== TAMBAH USER ===== -->
+            <div class="page" id="page-adduser">
+                <div class="page-header">
+                    <h2>Tambah User</h2>
+                    <p>Buat akun baru dengan key &amp; role</p>
+                </div>
+                <div class="add-user-form">
+                    <div class="form-card">
+                        <div class="form-group">
+                            <label>Nama User</label>
+                            <input type="text" id="addUserName" placeholder="Nama user..." class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Key Login</label>
+                            <input type="text" id="addUserKey" placeholder="key untuk login..." class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Role</label>
+                            <select id="addUserRole" class="form-control">
+                                <option value="Full Up">Full Up</option>
+                                <option value="Reseller">Reseller</option>
+                                <option value="Owner">Owner</option>
+                                <option value="Owner VIP">Owner VIP</option>
+                                <option value="Developer">Developer</option>
+                            </select>
+                        </div>
+                        <div class="form-hint">
+                            <i class="fas fa-info-circle"></i>
+                            Anda hanya bisa menambah role: <span id="allowedRoles">tidak ada</span>
+                        </div>
+                        <button class="btn-primary" id="btnAddUserSubmit">
+                            <i class="fas fa-plus"></i> Tambah User
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== PENGATURAN ===== -->
+            <div class="page" id="page-settings">
+                <div class="page-header">
+                    <h2>Pengaturan</h2>
+                    <p>Konfigurasi sistem</p>
+                </div>
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3><i class="fas fa-database"></i> Database</h3>
+                        <div class="form-group">
+                            <label>GitHub Raw URL</label>
+                            <input type="text" id="settingDbUrl" placeholder="https://raw.githubusercontent.com/..." class="form-control">
+                        </div>
+                        <button class="btn-primary" id="btnSyncDb">Sinkronisasi</button>
+                    </div>
+                    <div class="settings-card">
+                        <h3><i class="fas fa-shield-alt"></i> Keamanan</h3>
+                        <div class="form-group">
+                            <label>Strict Mode</label>
+                            <select id="settingStrictMode" class="form-control">
+                                <option value="false">Nonaktif</option>
+                                <option value="true">Aktif</option>
+                            </select>
+                        </div>
+                        <button class="btn-danger" id="btnRevokeAll">Revoke Semua</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- ===== MODAL ===== -->
+<div class="modal" id="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Modal</h3>
+            <button class="modal-close" id="modalClose">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
