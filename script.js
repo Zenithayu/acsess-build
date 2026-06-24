@@ -1,7 +1,6 @@
 // ============================================================
 // AKSAKA BOT BUILD - SCRIPT
-// AUTO GENERATE - ROLE MANAGEMENT
-// TERHUBUNG DENGAN GITHUB RAW & AUTO SAVE
+// OWNER: Full Akses | RESELLER: Add Token & Add User Only
 // ============================================================
 
 // ============================================================
@@ -20,20 +19,16 @@ const state = {
     currentRole: null,
     tokens: [],
     users: [],
-    roleLevel: 0,
     tokenOwners: {}
 };
 
 // Role levels
 const ROLE_LEVELS = {
-    'Full Up': 0,
     'Reseller': 1,
-    'Owner': 2,
-    'Owner VIP': 3,
-    'Developer': 4
+    'Owner': 2
 };
 
-const ROLE_NAMES = ['Full Up', 'Reseller', 'Owner', 'Owner VIP', 'Developer'];
+const ROLE_NAMES = ['Reseller', 'Owner'];
 
 // ============================================================
 // DOM REFS
@@ -85,6 +80,7 @@ async function loadData() {
             } else {
                 state.users = [
                     { id: 'user_1700000000000', name: 'Admin AKSAKA', key: 'admin123', role: 'Owner' },
+                    { id: 'user_1700000000001', name: 'Reseller 1', key: 'reseller123', role: 'Reseller' },
                 ];
             }
             
@@ -113,7 +109,7 @@ async function loadData() {
     updateStats();
     renderTokens();
     renderUsers();
-    updateAllowedRoles();
+    updateUIByRole();
     
     $('tokenBadge').textContent = state.tokens.length;
     $('userBadge').textContent = state.users.length;
@@ -124,10 +120,94 @@ async function loadData() {
 function setDefaultData() {
     state.users = [
         { id: 'user_1700000000000', name: 'Admin AKSAKA', key: 'admin123', role: 'Owner' },
+        { id: 'user_1700000000001', name: 'Reseller 1', key: 'reseller123', role: 'Reseller' },
     ];
     const token = generateToken();
     state.tokens = [token];
     state.tokenOwners[token] = 'Admin AKSAKA';
+}
+
+// ============================================================
+// UPDATE UI BY ROLE
+// ============================================================
+function updateUIByRole() {
+    const role = state.currentRole;
+    const isOwner = role === 'Owner';
+    const isReseller = role === 'Reseller';
+    
+    // Sembunyikan menu berdasarkan role
+    const navSettings = $('navSettings');
+    const btnSyncDb = $('btnSyncDb');
+    const btnSaveToGit = $('btnSaveToGit');
+    const btnRevokeAll = $('btnRevokeAll');
+    const btnAddUserPage = $('btnAddUserPage');
+    const resellerInfo = $('resellerInfo');
+    
+    if (isReseller) {
+        // Reseller: sembunyikan settings
+        if (navSettings) navSettings.style.display = 'none';
+        if (btnSyncDb) btnSyncDb.style.display = 'none';
+        if (btnSaveToGit) btnSaveToGit.style.display = 'none';
+        if (btnRevokeAll) btnRevokeAll.style.display = 'none';
+        if (btnAddUserPage) btnAddUserPage.style.display = 'inline-flex'; // Bisa tambah user
+        if (resellerInfo) resellerInfo.style.display = 'block';
+        
+        // Tampilkan yang diizinkan
+        $('quickAddToken').style.display = 'flex';
+        $('quickAddUser').style.display = 'flex';
+        $('btnAddToken').style.display = 'inline-flex';
+        $('btnAddUserPage').style.display = 'inline-flex';
+        
+        $('roleDisplay').textContent = '🟢 Reseller';
+        $('roleDisplay').style.color = '#00C853';
+        
+        $('allowedRoles').textContent = 'Owner';
+        
+        const select = $('addUserRole');
+        if (select) {
+            select.innerHTML = '';
+            const opt = document.createElement('option');
+            opt.value = 'Owner';
+            opt.textContent = 'Owner';
+            select.appendChild(opt);
+            select.value = 'Owner';
+        }
+        
+    } else if (isOwner) {
+        // Owner: semua akses
+        if (navSettings) navSettings.style.display = 'flex';
+        if (btnSyncDb) btnSyncDb.style.display = 'inline-flex';
+        if (btnSaveToGit) btnSaveToGit.style.display = 'inline-flex';
+        if (btnRevokeAll) btnRevokeAll.style.display = 'inline-flex';
+        if (btnAddUserPage) btnAddUserPage.style.display = 'inline-flex';
+        if (resellerInfo) resellerInfo.style.display = 'none';
+        
+        $('quickAddToken').style.display = 'flex';
+        $('quickAddUser').style.display = 'flex';
+        $('btnAddToken').style.display = 'inline-flex';
+        $('btnAddUserPage').style.display = 'inline-flex';
+        
+        $('roleDisplay').textContent = '🟡 Owner';
+        $('roleDisplay').style.color = '#FFD600';
+        
+        $('allowedRoles').textContent = 'tidak ada (Anda Owner)';
+        
+        const select = $('addUserRole');
+        if (select) {
+            select.innerHTML = '';
+            ['Reseller', 'Owner'].forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r;
+                opt.textContent = r;
+                select.appendChild(opt);
+            });
+        }
+    } else {
+        // Guest
+        $('roleDisplay').textContent = '👤 Guest';
+        $('roleDisplay').style.color = '#8888A8';
+        if (resellerInfo) resellerInfo.style.display = 'none';
+    }
 }
 
 // ============================================================
@@ -152,7 +232,6 @@ async function updateRemoteDb() {
         
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
         
-        // Get SHA file
         const getUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_PATH}?ref=${GITHUB_BRANCH}`;
         const getRes = await fetch(getUrl, {
             headers: {
@@ -167,7 +246,6 @@ async function updateRemoteDb() {
             sha = fileData.sha;
         }
         
-        // Update file
         const putUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_PATH}`;
         const putRes = await fetch(putUrl, {
             method: 'PUT',
@@ -202,14 +280,12 @@ async function updateRemoteDb() {
 // INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Load GitHub token dari localStorage
     const savedToken = localStorage.getItem('github_token');
     if (savedToken) {
         const input = $('settingGithubToken');
         if (input) input.value = savedToken;
     }
     
-    // Load URL dari localStorage
     const savedUrl = localStorage.getItem('github_raw_url');
     if (savedUrl) {
         const input = $('settingDbUrl');
@@ -232,39 +308,8 @@ function checkLogin() {
             state.currentUser = session.user;
             state.currentRole = session.role;
             updateUserUI();
-            updateAllowedRoles();
         } catch (e) {
             localStorage.removeItem('aksaka_session');
-        }
-    }
-}
-
-function updateAllowedRoles() {
-    const role = state.currentRole || 'Full Up';
-    const level = ROLE_LEVELS[role] || 0;
-    const allowed = ROLE_NAMES.slice(level + 1);
-    
-    const allowedText = allowed.length > 0 ? allowed.join(', ') : 'tidak ada';
-    $('allowedRoles').textContent = allowedText;
-    
-    const select = $('addUserRole');
-    if (select) {
-        const currentVal = select.value;
-        select.innerHTML = '';
-        allowed.forEach(r => {
-            const opt = document.createElement('option');
-            opt.value = r;
-            opt.textContent = r;
-            select.appendChild(opt);
-        });
-        if (allowed.length === 0) {
-            const opt = document.createElement('option');
-            opt.value = '';
-            opt.textContent = 'Tidak ada role yang bisa ditambah';
-            select.appendChild(opt);
-        }
-        if (allowed.includes(currentVal)) {
-            select.value = currentVal;
         }
     }
 }
@@ -278,10 +323,38 @@ function updateUserUI() {
         $('btnLogoutHeader').style.display = 'flex';
         $('btnLogin').style.display = 'none';
         
-        state.roleLevel = ROLE_LEVELS[state.currentRole] || 0;
-        $('roleLevel').textContent = state.roleLevel;
-        $('roleLevelDisplay').textContent = `Role Level: ${state.roleLevel}`;
+        updateUIByRole();
+        updateAccessPage();
     }
+}
+
+// ============================================================
+// UPDATE ACCESS PAGE
+// ============================================================
+function updateAccessPage() {
+    if (state.currentUser) {
+        $('myName').textContent = state.currentUser.name || '-';
+        $('myKey').textContent = state.currentUser.key || '-';
+        $('myRole').textContent = state.currentRole || '-';
+        $('myLevel').textContent = ROLE_LEVELS[state.currentRole] || 0;
+        $('myJoined').textContent = state.currentUser.joined || new Date().toISOString().split('T')[0];
+        $('myAccessUrl').textContent = window.location.href;
+    }
+}
+
+function copyAccessUrl() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        showToast('URL akses berhasil dicopy!', 'success');
+    }).catch(() => {
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast('URL akses berhasil dicopy!', 'success');
+    });
 }
 
 // ============================================================
@@ -297,10 +370,9 @@ function showLogin() {
             <i class="fas fa-sign-in-alt"></i> Login
         </button>
         <div style="margin-top:12px; text-align:center; font-size:12px; color:var(--text-secondary);">
-            <p>Demo Login:</p>
-            <p>Owner: <code>admin</code> | Reseller: <code>reseller</code></p>
-            <p>Full Up: <code>fullup</code> | Developer: <code>dev</code></p>
-            <p>Atau pake key: <code>admin123</code></p>
+            <p>Login Demo:</p>
+            <p>Owner: <code>admin123</code> atau <code>admin</code></p>
+            <p>Reseller: <code>reseller123</code> atau <code>reseller</code></p>
         </div>
     `;
     
@@ -320,15 +392,12 @@ function showLogin() {
             }));
             closeModal();
             updateUserUI();
-            updateAllowedRoles();
             loadData();
-            showToast(`Selamat datang, ${user.name}!`, 'success');
+            showToast(`Selamat datang, ${user.name}! (${user.role})`, 'success');
         } else {
             const demos = {
                 'admin': { name: 'Admin', role: 'Owner' },
-                'reseller': { name: 'Reseller 1', role: 'Reseller' },
-                'fullup': { name: 'Full Up User', role: 'Full Up' },
-                'dev': { name: 'Developer', role: 'Developer' }
+                'reseller': { name: 'Reseller 1', role: 'Reseller' }
             };
             
             if (demos[key]) {
@@ -346,9 +415,8 @@ function showLogin() {
                 }));
                 closeModal();
                 updateUserUI();
-                updateAllowedRoles();
                 loadData();
-                showToast(`Selamat datang, ${demoUser.name}!`, 'success');
+                showToast(`Selamat datang, ${demoUser.name}! (${demoUser.role})`, 'success');
             } else {
                 showToast('Key tidak valid!', 'error');
             }
@@ -365,8 +433,8 @@ function logout() {
     $('btnLogoutSmall').style.display = 'none';
     $('btnLogoutHeader').style.display = 'none';
     $('btnLogin').style.display = 'block';
-    $('roleLevel').textContent = '0';
-    $('roleLevelDisplay').textContent = 'Role Level: 0';
+    $('roleDisplay').textContent = '👤 Guest';
+    $('roleDisplay').style.color = '#8888A8';
     showToast('Logout berhasil', 'info');
     loadData();
 }
@@ -390,7 +458,8 @@ function setupEventListeners() {
                 'tokens': 'Daftar Token',
                 'users': 'Kelola User',
                 'adduser': 'Tambah User',
-                'settings': 'Pengaturan'
+                'settings': 'Pengaturan',
+                'myaccess': 'Akses Saya'
             };
             $('pageTitle').textContent = titleMap[page] || page;
             
@@ -432,6 +501,7 @@ function setupEventListeners() {
         showAddTokenModal();
     });
     
+    // ===== TAMBAH USER (SEMUA ROLE BISA) =====
     $('btnAddUserPage').addEventListener('click', () => {
         if (!state.currentUser) {
             showToast('Silakan login terlebih dahulu!', 'error');
@@ -470,20 +540,18 @@ function setupEventListeners() {
         }
     });
     
-    // === SAVE TO GITHUB ===
+    // ===== SAVE TO GITHUB (HANYA OWNER) =====
     $('btnSaveToGit').addEventListener('click', async () => {
         if (state.currentRole !== 'Owner') {
-            showToast('Hanya Owner!', 'error');
+            showToast('❌ Hanya Owner!', 'error');
             return;
         }
         
-        // Simpan token GitHub
         const token = $('settingGithubToken').value.trim();
         if (token) {
             localStorage.setItem('github_token', token);
         }
         
-        // Simpan URL
         const url = $('settingDbUrl').value.trim();
         if (url) {
             localStorage.setItem('github_raw_url', url);
@@ -492,20 +560,20 @@ function setupEventListeners() {
         await updateRemoteDb();
     });
     
-    // === SYNC DB ===
+    // ===== SYNC DB (HANYA OWNER) =====
     $('btnSyncDb').addEventListener('click', async () => {
         if (state.currentRole !== 'Owner') {
-            showToast('Hanya Owner!', 'error');
+            showToast('❌ Hanya Owner!', 'error');
             return;
         }
         await loadData();
         showToast('Database berhasil disinkronisasi dari GitHub!', 'success');
     });
     
-    // === REVOKE ALL ===
+    // ===== REVOKE ALL (HANYA OWNER) =====
     $('btnRevokeAll').addEventListener('click', () => {
         if (state.currentRole !== 'Owner') {
-            showToast('Hanya Owner!', 'error');
+            showToast('❌ Hanya Owner!', 'error');
             return;
         }
         if (confirm('Yakin ingin merevoke semua token?')) {
@@ -518,7 +586,6 @@ function setupEventListeners() {
         }
     });
     
-    // === SAVE GITHUB TOKEN ON CHANGE ===
     $('settingGithubToken').addEventListener('change', () => {
         const token = $('settingGithubToken').value.trim();
         if (token) {
@@ -532,6 +599,8 @@ function setupEventListeners() {
             localStorage.setItem('github_raw_url', url);
         }
     });
+    
+    window.copyAccessUrl = copyAccessUrl;
     
     $('modalClose').addEventListener('click', closeModal);
     document.getElementById('modal').addEventListener('click', (e) => {
@@ -587,7 +656,7 @@ function renderTokens() {
 }
 
 // ============================================================
-// RENDER USERS
+// RENDER USERS - HANYA OWNER YANG BISA HAPUS/EDIT USER
 // ============================================================
 function renderUsers() {
     const tbody = $('userTableBody');
@@ -602,29 +671,39 @@ function renderUsers() {
         tokenCount[owner] = (tokenCount[owner] || 0) + 1;
     });
     
+    const isOwner = state.currentRole === 'Owner';
+    
     tbody.innerHTML = state.users.map((u, i) => {
-        const roleClass = u.role.toLowerCase().replace(' ', '');
+        const roleClass = u.role.toLowerCase();
         const count = tokenCount[u.name] || 0;
-        return `
-        <tr>
-            <td><code>${u.id}</code></td>
-            <td><strong>${u.name}</strong></td>
-            <td><span class="role-badge ${roleClass}">${u.role}</span></td>
-            <td>${count} token</td>
-            <td>
+        
+        let actions = '';
+        if (isOwner) {
+            actions = `
                 <button class="btn-action edit" onclick="editUser('${u.id}')">
                     <i class="fas fa-edit"></i>
                 </button>
                 <button class="btn-action delete" onclick="deleteUser('${u.id}')">
                     <i class="fas fa-trash"></i>
                 </button>
-            </td>
+            `;
+        } else {
+            actions = `<span class="btn-action readonly"><i class="fas fa-lock"></i> Read Only</span>`;
+        }
+        
+        return `
+        <tr>
+            <td><code>${u.id}</code></td>
+            <td><strong>${u.name}</strong></td>
+            <td><span class="role-badge ${roleClass}">${u.role}</span></td>
+            <td>${count} token</td>
+            <td>${actions}</td>
         </tr>
     `}).join('');
 }
 
 // ============================================================
-// ADD TOKEN
+// ADD TOKEN (SEMUA ROLE BISA)
 // ============================================================
 function showAddTokenModal() {
     const body = `
@@ -640,7 +719,7 @@ function showAddTokenModal() {
         </div>
         <div class="form-hint">
             <i class="fas fa-info-circle"></i>
-            Full Up: hanya bisa memiliki 1 token (akan otomatis replace)
+            Setiap user bisa memiliki banyak token
         </div>
         <button class="btn-primary" id="btnSaveToken" style="width:100%; justify-content:center;">
             <i class="fas fa-plus"></i> Tambah
@@ -671,17 +750,9 @@ function showAddTokenModal() {
             return;
         }
         
-        if (state.currentRole === 'Full Up' && state.tokens.length >= 1) {
-            const oldToken = state.tokens[0];
-            state.tokens[0] = token;
-            delete state.tokenOwners[oldToken];
-            state.tokenOwners[token] = owner;
-            showToast('Token direplace (Full Up hanya 1 token)', 'warning');
-        } else {
-            state.tokens.push(token);
-            state.tokenOwners[token] = owner;
-            showToast(`Token berhasil ditambahkan untuk ${owner}!`, 'success');
-        }
+        state.tokens.push(token);
+        state.tokenOwners[token] = owner;
+        showToast(`Token berhasil ditambahkan untuk ${owner}!`, 'success');
         
         renderTokens();
         updateStats();
@@ -693,8 +764,8 @@ function showAddTokenModal() {
 }
 
 function deleteToken(index) {
-    if (state.currentRole === 'Full Up' && state.tokens.length <= 1) {
-        showToast('Full Up tidak bisa menghapus token terakhir', 'error');
+    if (!state.currentUser) {
+        showToast('Silakan login!', 'error');
         return;
     }
     
@@ -711,7 +782,7 @@ function deleteToken(index) {
 }
 
 // ============================================================
-// ADD USER
+// ADD USER (SEMUA ROLE BISA)
 // ============================================================
 function addUser() {
     const name = $('addUserName').value.trim();
@@ -727,19 +798,12 @@ function addUser() {
         return;
     }
     
-    const currentLevel = ROLE_LEVELS[state.currentRole] || 0;
-    const selectedLevel = ROLE_LEVELS[role] || 0;
-    
-    if (selectedLevel <= currentLevel) {
-        showToast(`Anda tidak bisa menambah role ${role} (level ${selectedLevel})`, 'error');
-        return;
-    }
-    
     const newUser = {
         id: generateUserId(),
         name: name,
         key: key,
-        role: role
+        role: role,
+        joined: new Date().toISOString().split('T')[0]
     };
     
     state.users.push(newUser);
@@ -754,26 +818,105 @@ function addUser() {
     $('addUserKey').value = newKey;
     
     updateRemoteDb();
-    showToast(`User ${name} berhasil ditambahkan!`, 'success');
+    showToast(`✅ User ${name} (${role}) berhasil ditambahkan!`, 'success');
 }
 
 // ============================================================
-// USER ACTIONS
+// EDIT USER (HANYA OWNER)
 // ============================================================
 function editUser(id) {
-    const user = state.users.find(u => u.id === id);
-    if (!user) return;
-    showToast(`Edit user: ${user.name}`, 'info');
-}
-
-function deleteUser(id) {
     if (state.currentRole !== 'Owner') {
-        showToast('Hanya Owner yang bisa menghapus user!', 'error');
+        showToast('❌ Hanya Owner yang bisa mengedit user!', 'error');
         return;
     }
-    if (!confirm('Hapus user ini?')) return;
     const user = state.users.find(u => u.id === id);
+    if (!user) {
+        showToast('User tidak ditemukan!', 'error');
+        return;
+    }
+    
+    const body = `
+        <div class="form-group">
+            <label>Nama User</label>
+            <input type="text" id="editUserName" value="${user.name}" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Key Login</label>
+            <input type="text" id="editUserKey" value="${user.key}" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Role</label>
+            <select id="editUserRole" class="form-control">
+                <option value="Reseller" ${user.role === 'Reseller' ? 'selected' : ''}>Reseller</option>
+                <option value="Owner" ${user.role === 'Owner' ? 'selected' : ''}>Owner</option>
+            </select>
+        </div>
+        <button class="btn-primary" id="btnEditUserSubmit" style="width:100%; justify-content:center;">
+            <i class="fas fa-save"></i> Simpan Perubahan
+        </button>
+    `;
+    
+    openModal(`Edit User: ${user.name}`, body);
+    
+    $('btnEditUserSubmit').addEventListener('click', () => {
+        const newName = $('editUserName').value.trim();
+        const newKey = $('editUserKey').value.trim();
+        const newRole = $('editUserRole').value;
+        
+        if (!newName) {
+            showToast('Nama tidak boleh kosong!', 'error');
+            return;
+        }
+        if (!newKey) {
+            showToast('Key tidak boleh kosong!', 'error');
+            return;
+        }
+        
+        const oldName = user.name;
+        user.name = newName;
+        user.key = newKey;
+        user.role = newRole;
+        
+        if (newName !== oldName) {
+            Object.keys(state.tokenOwners).forEach(t => {
+                if (state.tokenOwners[t] === oldName) {
+                    state.tokenOwners[t] = newName;
+                }
+            });
+        }
+        
+        renderUsers();
+        renderTokens();
+        updateRemoteDb();
+        closeModal();
+        showToast(`✅ User ${newName} berhasil diupdate!`, 'success');
+    });
+}
+
+// ============================================================
+// DELETE USER (HANYA OWNER)
+// ============================================================
+function deleteUser(id) {
+    if (state.currentRole !== 'Owner') {
+        showToast('❌ Hanya Owner yang bisa menghapus user!', 'error');
+        return;
+    }
+    
+    if (!confirm('⚠️ Yakin ingin menghapus user ini?\n\nSemua token milik user ini juga akan dihapus!')) return;
+    
+    const user = state.users.find(u => u.id === id);
+    if (!user) {
+        showToast('User tidak ditemukan!', 'error');
+        return;
+    }
+    
+    if (state.currentUser && state.currentUser.id === id) {
+        showToast('❌ Anda tidak bisa menghapus akun sendiri!', 'error');
+        return;
+    }
+    
     state.users = state.users.filter(u => u.id !== id);
+    
     if (user) {
         const toRemove = Object.keys(state.tokenOwners).filter(t => state.tokenOwners[t] === user.name);
         toRemove.forEach(t => {
@@ -782,13 +925,14 @@ function deleteUser(id) {
             delete state.tokenOwners[t];
         });
     }
+    
     renderUsers();
     renderTokens();
     updateStats();
     $('userBadge').textContent = state.users.length;
     $('userCount').textContent = `${state.users.length} user`;
     updateRemoteDb();
-    showToast('User dihapus', 'success');
+    showToast(`✅ User ${user.name} berhasil dihapus!`, 'success');
 }
 
 // ============================================================
@@ -849,8 +993,10 @@ window.loadData = loadData;
 window.generateToken = generateToken;
 window.generateKey = generateKey;
 window.updateRemoteDb = updateRemoteDb;
+window.copyAccessUrl = copyAccessUrl;
 
 console.log('🏗️ AKSAKA BOT BUILD - Panel loaded');
-console.log('📌 Login: admin | reseller | fullup | dev');
-console.log('📌 Total: 1 token, 1 user');
+console.log('📌 Login: admin123 (Owner) | reseller123 (Reseller)');
+console.log('📌 Total: 1 token, 2 user');
 console.log('📌 Terhubung dengan GitHub: ' + GITHUB_RAW_URL);
+console.log('📌 Aturan: Owner = Full Akses | Reseller = Add Token + Add User');
