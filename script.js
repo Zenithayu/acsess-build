@@ -1,8 +1,16 @@
 // ============================================================
 // AKSAKA BOT BUILD - SCRIPT
 // AUTO GENERATE - ROLE MANAGEMENT
-// TOTAL TOKEN = 1, TOTAL USER = 1
+// TERHUBUNG DENGAN GITHUB RAW & AUTO SAVE
 // ============================================================
+
+// ============================================================
+// KONFIGURASI GITHUB - GANTI INI!
+// ============================================================
+const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/database.json';
+const GITHUB_REPO = 'YOUR_USERNAME/YOUR_REPO';
+const GITHUB_BRANCH = 'main';
+const GITHUB_PATH = 'database.json';
 
 // ============================================================
 // STATE
@@ -57,9 +65,157 @@ function generateKey(name) {
 }
 
 // ============================================================
+// GITHUB DATABASE FUNCTIONS
+// ============================================================
+function getGithubToken() {
+    return localStorage.getItem('github_token') || '';
+}
+
+// ============================================================
+// LOAD DATA - DARI GITHUB RAW
+// ============================================================
+async function loadData() {
+    try {
+        const response = await fetch(GITHUB_RAW_URL);
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.users && data.users.length > 0) {
+                state.users = data.users;
+            } else {
+                state.users = [
+                    { id: 'user_1700000000000', name: 'Admin AKSAKA', key: 'admin123', role: 'Owner' },
+                ];
+            }
+            
+            if (data.tokens && data.tokens.length > 0) {
+                state.tokens = data.tokens.map(t => t.token);
+                state.tokenOwners = {};
+                data.tokens.forEach(t => {
+                    state.tokenOwners[t.token] = t.owner;
+                });
+            } else {
+                const token = generateToken();
+                state.tokens = [token];
+                state.tokenOwners[token] = 'Admin AKSAKA';
+            }
+            
+            console.log('✅ Data berhasil diambil dari GitHub');
+        } else {
+            console.log('⚠️ Gagal ambil dari GitHub, pakai default');
+            setDefaultData();
+        }
+    } catch (e) {
+        console.log('⚠️ Error fetch GitHub:', e.message);
+        setDefaultData();
+    }
+    
+    updateStats();
+    renderTokens();
+    renderUsers();
+    updateAllowedRoles();
+    
+    $('tokenBadge').textContent = state.tokens.length;
+    $('userBadge').textContent = state.users.length;
+    $('tokenCount').textContent = `${state.tokens.length} token`;
+    $('userCount').textContent = `${state.users.length} user`;
+}
+
+function setDefaultData() {
+    state.users = [
+        { id: 'user_1700000000000', name: 'Admin AKSAKA', key: 'admin123', role: 'Owner' },
+    ];
+    const token = generateToken();
+    state.tokens = [token];
+    state.tokenOwners[token] = 'Admin AKSAKA';
+}
+
+// ============================================================
+// UPDATE DATA KE GITHUB
+// ============================================================
+async function updateRemoteDb() {
+    try {
+        const token = getGithubToken();
+        if (!token) {
+            showToast('Token GitHub tidak ditemukan! Masukkan di Pengaturan.', 'error');
+            return false;
+        }
+        
+        const data = {
+            users: state.users,
+            tokens: state.tokens.map(t => ({
+                token: t,
+                owner: state.tokenOwners[t] || 'Unknown'
+            })),
+            lastUpdated: new Date().toISOString()
+        };
+        
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+        
+        // Get SHA file
+        const getUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_PATH}?ref=${GITHUB_BRANCH}`;
+        const getRes = await fetch(getUrl, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.github+json'
+            }
+        });
+        
+        let sha = null;
+        if (getRes.ok) {
+            const fileData = await getRes.json();
+            sha = fileData.sha;
+        }
+        
+        // Update file
+        const putUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_PATH}`;
+        const putRes = await fetch(putUrl, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github+json'
+            },
+            body: JSON.stringify({
+                message: 'Update database via panel AKSAKA BOT BUILD',
+                content: content,
+                branch: GITHUB_BRANCH,
+                sha: sha || undefined
+            })
+        });
+        
+        if (putRes.ok) {
+            showToast('Data berhasil disimpan ke GitHub!', 'success');
+            return true;
+        } else {
+            const err = await putRes.text();
+            showToast(`Gagal simpan: ${err}`, 'error');
+            return false;
+        }
+    } catch (e) {
+        showToast(`Error: ${e.message}`, 'error');
+        return false;
+    }
+}
+
+// ============================================================
 // INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
+    // Load GitHub token dari localStorage
+    const savedToken = localStorage.getItem('github_token');
+    if (savedToken) {
+        const input = $('settingGithubToken');
+        if (input) input.value = savedToken;
+    }
+    
+    // Load URL dari localStorage
+    const savedUrl = localStorage.getItem('github_raw_url');
+    if (savedUrl) {
+        const input = $('settingDbUrl');
+        if (input) input.value = savedUrl;
+    }
+    
     checkLogin();
     setupEventListeners();
     loadData();
@@ -314,15 +470,39 @@ function setupEventListeners() {
         }
     });
     
-    $('btnSyncDb').addEventListener('click', () => {
+    // === SAVE TO GITHUB ===
+    $('btnSaveToGit').addEventListener('click', async () => {
         if (state.currentRole !== 'Owner') {
             showToast('Hanya Owner!', 'error');
             return;
         }
-        showToast('Database berhasil disinkronisasi!', 'success');
-        loadData();
+        
+        // Simpan token GitHub
+        const token = $('settingGithubToken').value.trim();
+        if (token) {
+            localStorage.setItem('github_token', token);
+        }
+        
+        // Simpan URL
+        const url = $('settingDbUrl').value.trim();
+        if (url) {
+            localStorage.setItem('github_raw_url', url);
+        }
+        
+        await updateRemoteDb();
     });
     
+    // === SYNC DB ===
+    $('btnSyncDb').addEventListener('click', async () => {
+        if (state.currentRole !== 'Owner') {
+            showToast('Hanya Owner!', 'error');
+            return;
+        }
+        await loadData();
+        showToast('Database berhasil disinkronisasi dari GitHub!', 'success');
+    });
+    
+    // === REVOKE ALL ===
     $('btnRevokeAll').addEventListener('click', () => {
         if (state.currentRole !== 'Owner') {
             showToast('Hanya Owner!', 'error');
@@ -333,7 +513,23 @@ function setupEventListeners() {
             state.tokenOwners = {};
             renderTokens();
             updateStats();
+            updateRemoteDb();
             showToast('Semua token telah direvoke!', 'warning');
+        }
+    });
+    
+    // === SAVE GITHUB TOKEN ON CHANGE ===
+    $('settingGithubToken').addEventListener('change', () => {
+        const token = $('settingGithubToken').value.trim();
+        if (token) {
+            localStorage.setItem('github_token', token);
+        }
+    });
+    
+    $('settingDbUrl').addEventListener('change', () => {
+        const url = $('settingDbUrl').value.trim();
+        if (url) {
+            localStorage.setItem('github_raw_url', url);
         }
     });
     
@@ -341,35 +537,6 @@ function setupEventListeners() {
     document.getElementById('modal').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeModal();
     });
-}
-
-// ============================================================
-// LOAD DATA - 1 TOKEN, 1 USER
-// ============================================================
-function loadData() {
-    // 1 USER
-    if (state.users.length === 0) {
-        state.users = [
-            { id: 'user_1700000000000', name: 'Admin AKSAKA', key: 'admin123', role: 'Owner' },
-        ];
-    }
-    
-    // 1 TOKEN
-    if (state.tokens.length === 0) {
-        const token = generateToken();
-        state.tokens.push(token);
-        state.tokenOwners[token] = 'Admin AKSAKA';
-    }
-    
-    updateStats();
-    renderTokens();
-    renderUsers();
-    updateAllowedRoles();
-    
-    $('tokenBadge').textContent = state.tokens.length;
-    $('userBadge').textContent = state.users.length;
-    $('tokenCount').textContent = `${state.tokens.length} token`;
-    $('userCount').textContent = `${state.users.length} user`;
 }
 
 // ============================================================
@@ -520,6 +687,7 @@ function showAddTokenModal() {
         updateStats();
         $('tokenBadge').textContent = state.tokens.length;
         $('tokenCount').textContent = `${state.tokens.length} token`;
+        updateRemoteDb();
         closeModal();
     });
 }
@@ -538,6 +706,7 @@ function deleteToken(index) {
     updateStats();
     $('tokenBadge').textContent = state.tokens.length;
     $('tokenCount').textContent = `${state.tokens.length} token`;
+    updateRemoteDb();
     showToast('Token dihapus', 'success');
 }
 
@@ -584,6 +753,7 @@ function addUser() {
     const newKey = generateKey('');
     $('addUserKey').value = newKey;
     
+    updateRemoteDb();
     showToast(`User ${name} berhasil ditambahkan!`, 'success');
 }
 
@@ -617,6 +787,7 @@ function deleteUser(id) {
     updateStats();
     $('userBadge').textContent = state.users.length;
     $('userCount').textContent = `${state.users.length} user`;
+    updateRemoteDb();
     showToast('User dihapus', 'success');
 }
 
@@ -677,7 +848,9 @@ window.openModal = openModal;
 window.loadData = loadData;
 window.generateToken = generateToken;
 window.generateKey = generateKey;
+window.updateRemoteDb = updateRemoteDb;
 
 console.log('🏗️ AKSAKA BOT BUILD - Panel loaded');
 console.log('📌 Login: admin | reseller | fullup | dev');
 console.log('📌 Total: 1 token, 1 user');
+console.log('📌 Terhubung dengan GitHub: ' + GITHUB_RAW_URL);
