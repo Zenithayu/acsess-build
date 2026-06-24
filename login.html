@@ -23,7 +23,6 @@
             overflow: hidden;
         }
 
-        /* Background Glow */
         .bg-glow {
             position: fixed;
             top: -50%;
@@ -58,7 +57,6 @@
             backdrop-filter: blur(10px);
         }
 
-        /* Logo / Brand */
         .login-brand {
             text-align: center;
             margin-bottom: 32px;
@@ -97,7 +95,6 @@
             -webkit-text-fill-color: #8888A8;
         }
 
-        /* Panel Token Label */
         .panel-label {
             text-align: center;
             margin-bottom: 28px;
@@ -117,7 +114,6 @@
             color: #6C3CE1;
         }
 
-        /* Form */
         .form-group {
             margin-bottom: 20px;
         }
@@ -156,7 +152,6 @@
             color: #555577;
         }
 
-        /* Button */
         .btn-login {
             width: 100%;
             padding: 14px;
@@ -187,7 +182,6 @@
             font-size: 18px;
         }
 
-        /* Footer */
         .login-footer {
             text-align: center;
             margin-top: 24px;
@@ -195,16 +189,6 @@
             color: #555577;
         }
 
-        .login-footer a {
-            color: #6C3CE1;
-            text-decoration: none;
-        }
-
-        .login-footer a:hover {
-            text-decoration: underline;
-        }
-
-        /* Error Message */
         .error-message {
             display: none;
             background: rgba(255, 23, 68, 0.1);
@@ -226,7 +210,6 @@
             font-size: 18px;
         }
 
-        /* Loading */
         .btn-login.loading {
             opacity: 0.7;
             pointer-events: none;
@@ -259,7 +242,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Responsive */
         @media (max-width: 480px) {
             .login-card {
                 padding: 28px 20px;
@@ -289,7 +271,6 @@
 
 <div class="login-container">
     <div class="login-card">
-        <!-- Brand -->
         <div class="login-brand">
             <div class="brand-icon">
                 <i class="fas fa-robot"></i>
@@ -298,18 +279,15 @@
             <span class="brand-sub">Panel Token</span>
         </div>
 
-        <!-- Panel Label -->
         <div class="panel-label">
             <span><i class="fas fa-key"></i> masukkan key akses</span>
         </div>
 
-        <!-- Error Message -->
         <div class="error-message" id="errorMessage">
             <i class="fas fa-exclamation-circle"></i>
             <span id="errorText">Key akses tidak valid!</span>
         </div>
 
-        <!-- Form -->
         <form id="loginForm" onsubmit="return false;">
             <div class="form-group">
                 <label><i class="fas fa-lock"></i> Key Akses</label>
@@ -324,7 +302,6 @@
             </button>
         </form>
 
-        <!-- Footer -->
         <div class="login-footer">
             <span>© 2026 BUILD AKSAKA — All rights reserved</span>
         </div>
@@ -332,58 +309,51 @@
 </div>
 
 <script>
-    // ============================================================
-    // BUILD AKSAKA - LOGIN SCRIPT
-    // ============================================================
+    (function() {
+        const session = localStorage.getItem('aksaka_session');
+        if (session) {
+            try {
+                const data = JSON.parse(session);
+                if (data.user) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+            } catch (e) {}
+        }
+    })();
+
+    const USERS = [
+        { id: 'user_1700000000000', name: 'Admin AKSAKA', key: 'admin123', role: 'Owner' },
+        { id: 'user_1700000000001', name: 'Reseller 1', key: 'reseller123', role: 'Reseller' },
+    ];
 
     const loginKeyInput = document.getElementById('loginKey');
     const btnLogin = document.getElementById('btnLogin');
     const errorMessage = document.getElementById('errorMessage');
     const errorText = document.getElementById('errorText');
 
-    // ============================================================
-    // DATA USER (SESUAI DENGAN DATABASE)
-    // ============================================================
-    const USERS = [
-        { id: 'user_1700000000000', name: 'Admin AKSAKA', key: 'admin123', role: 'Owner' },
-        { id: 'user_1700000000001', name: 'Reseller 1', key: 'reseller123', role: 'Reseller' },
-    ];
-
-    // ============================================================
-    // FUNGSI LOGIN
-    // ============================================================
     function handleLogin() {
         const key = loginKeyInput.value.trim();
-
-        // Reset error
         errorMessage.classList.remove('show');
 
-        // Validasi input
         if (!key) {
             showError('Masukkan key akses Anda!');
             loginKeyInput.focus();
             return;
         }
 
-        // Cari user
         const user = USERS.find(u => u.key === key);
 
         if (user) {
-            // Login berhasil
             btnLogin.classList.add('loading');
-
-            // Simpan session
             localStorage.setItem('aksaka_session', JSON.stringify({
                 user: user,
                 role: user.role
             }));
-
-            // Redirect ke panel utama
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 800);
         } else {
-            // Login gagal
             showError('Key akses tidak valid! Coba lagi.');
             loginKeyInput.value = '';
             loginKeyInput.focus();
@@ -395,34 +365,15 @@
         errorMessage.classList.add('show');
     }
 
-    // ============================================================
-    // EVENT LISTENERS
-    // ============================================================
     btnLogin.addEventListener('click', handleLogin);
-
     loginKeyInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             handleLogin();
         }
     });
-
-    // Hapus error saat typing
     loginKeyInput.addEventListener('input', () => {
         errorMessage.classList.remove('show');
-    });
-
-    // Cek session redirect
-    document.addEventListener('DOMContentLoaded', () => {
-        const session = localStorage.getItem('aksaka_session');
-        if (session) {
-            try {
-                const data = JSON.parse(session);
-                if (data.user) {
-                    window.location.href = 'index.html';
-                }
-            } catch (e) {}
-        }
     });
 
     console.log('🏗️ BUILD AKSAKA - Login Page');
