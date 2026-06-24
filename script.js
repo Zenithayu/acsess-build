@@ -16,10 +16,10 @@
     }
 })();
 
-const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Zenithayu/token/refs/heads/main/token.json?token=GHSAT0AAAAAAEAZIP5754ME4J2PE27CRLDK2R3IQOA';
-const GITHUB_REPO = 'token';
+const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/database.json';
+const GITHUB_REPO = 'YOUR_USERNAME/YOUR_REPO';
 const GITHUB_BRANCH = 'main';
-const GITHUB_PATH = 'token.json';
+const GITHUB_PATH = 'database.json';
 
 const state = {
     currentUser: null,
@@ -53,9 +53,12 @@ function getGithubToken() {
     return localStorage.getItem('github_token') || '';
 }
 
+// ============================================================
+// LOAD DATA DARI GITHUB
+// ============================================================
 async function loadData() {
     try {
-        const response = await fetch(GITHUB_RAW_URL);
+        const response = await fetch(GITHUB_RAW_URL + '?t=' + Date.now());
         if (response.ok) {
             const data = await response.json();
             
@@ -89,15 +92,7 @@ async function loadData() {
         setDefaultData();
     }
     
-    updateStats();
-    renderTokens();
-    renderUsers();
-    updateUIByRole();
-    
-    $('tokenBadge').textContent = state.tokens.length;
-    $('userBadge').textContent = state.users.length;
-    $('tokenCount').textContent = `${state.tokens.length} token`;
-    $('userCount').textContent = `${state.users.length} user`;
+    updateUI();
 }
 
 function setDefaultData() {
@@ -107,6 +102,18 @@ function setDefaultData() {
     ];
     state.tokens = [];
     state.tokenOwners = {};
+}
+
+function updateUI() {
+    updateStats();
+    renderTokens();
+    renderUsers();
+    updateUIByRole();
+    
+    $('tokenBadge').textContent = state.tokens.length;
+    $('userBadge').textContent = state.users.length;
+    $('tokenCount').textContent = `${state.tokens.length} token`;
+    $('userCount').textContent = `${state.users.length} user`;
 }
 
 function updateUIByRole() {
@@ -181,6 +188,9 @@ function updateUIByRole() {
     }
 }
 
+// ============================================================
+// UPDATE DATA KE GITHUB
+// ============================================================
 async function updateRemoteDb() {
     try {
         const token = getGithubToken();
@@ -231,17 +241,26 @@ async function updateRemoteDb() {
         });
         
         if (putRes.ok) {
-            showToast('Data berhasil disimpan ke GitHub!', 'success');
+            showToast('✅ Data berhasil disimpan ke GitHub!', 'success');
             return true;
         } else {
             const err = await putRes.text();
-            showToast(`Gagal simpan: ${err}`, 'error');
+            showToast(`❌ Gagal simpan: ${err}`, 'error');
             return false;
         }
     } catch (e) {
-        showToast(`Error: ${e.message}`, 'error');
+        showToast(`❌ Error: ${e.message}`, 'error');
         return false;
     }
+}
+
+// ============================================================
+// REFRESH DATA DARI GITHUB (TANPA RELOAD HALAMAN)
+// ============================================================
+async function refreshData() {
+    showToast('🔄 Memuat ulang data...', 'info');
+    await loadData();
+    showToast('✅ Data berhasil dimuat ulang!', 'success');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -362,14 +381,8 @@ function setupEventListeners() {
         $('sidebar').classList.toggle('open');
     });
     
-    $('btnRefresh').addEventListener('click', () => {
-        loadData();
-        showToast('Data diperbarui', 'success');
-    });
-    $('btnRefreshUsers').addEventListener('click', () => {
-        loadData();
-        showToast('Data user diperbarui', 'success');
-    });
+    $('btnRefresh').addEventListener('click', refreshData);
+    $('btnRefreshUsers').addEventListener('click', refreshData);
     
     $('btnLogoutSmall').addEventListener('click', logout);
     $('btnLogoutHeader').addEventListener('click', logout);
@@ -455,7 +468,7 @@ function setupEventListeners() {
             return;
         }
         await loadData();
-        showToast('Database berhasil disinkronisasi dari GitHub!', 'success');
+        showToast('✅ Database berhasil disinkronisasi dari GitHub!', 'success');
     });
     
     $('btnRevokeAll').addEventListener('click', () => {
@@ -466,8 +479,7 @@ function setupEventListeners() {
         if (confirm('Yakin ingin merevoke semua token?')) {
             state.tokens = [];
             state.tokenOwners = {};
-            renderTokens();
-            updateStats();
+            updateUI();
             updateRemoteDb();
             showToast('Semua token telah direvoke!', 'warning');
         }
@@ -600,7 +612,7 @@ function showAddTokenModal() {
         </div>
         <div class="form-hint">
             <i class="fas fa-info-circle"></i>
-            Token bisa diisi manual sesuai token dari @BotFather
+            Token diisi manual sesuai token dari @BotFather
         </div>
         <button class="btn-primary" id="btnSaveToken" style="width:100%; justify-content:center;">
             <i class="fas fa-save"></i> Simpan Token
@@ -609,19 +621,15 @@ function showAddTokenModal() {
     
     openModal('Tambah Token Manual', body);
     
-    // Fokus ke input token
     setTimeout(() => {
         const input = document.getElementById('newTokenInput');
         if (input) {
-            input.value = ''; // KOSONGKAN - TIDAK ADA AUTO GENERATE
+            input.value = '';
             input.focus();
         }
     }, 100);
     
-    // HAPUS SEMUA AUTO GENERATE
-    // Token diisi MANUAL oleh user
-    
-    $('btnSaveToken').addEventListener('click', () => {
+    $('btnSaveToken').addEventListener('click', async () => {
         const token = $('newTokenInput').value.trim();
         const owner = $('tokenOwnerSelect').value;
         
@@ -631,29 +639,29 @@ function showAddTokenModal() {
             return;
         }
         
-        // Validasi format token Telegram
         if (!/^\d+:[A-Za-z0-9_-]{35,}$/.test(token)) {
             showToast('⚠️ Format token tidak valid! Contoh: 1234567890:ABCdef...', 'warning');
             document.getElementById('newTokenInput').focus();
             return;
         }
         
-        // Cek apakah token sudah ada
         if (state.tokens.includes(token)) {
             showToast('⚠️ Token sudah ada! Masukkan token yang berbeda.', 'warning');
             document.getElementById('newTokenInput').focus();
             return;
         }
         
+        // === TAMBAH TOKEN KE STATE ===
         state.tokens.push(token);
         state.tokenOwners[token] = owner;
-        showToast(`✅ Token berhasil ditambahkan untuk ${owner}!`, 'success');
         
-        renderTokens();
-        updateStats();
-        $('tokenBadge').textContent = state.tokens.length;
-        $('tokenCount').textContent = `${state.tokens.length} token`;
+        // === UPDATE UI LANGSUNG (TANPA RELOAD) ===
+        updateUI();
+        
+        // === SIMPAN KE GITHUB (BACKGROUND) ===
         updateRemoteDb();
+        
+        showToast(`✅ Token berhasil ditambahkan untuk ${owner}!`, 'success');
         closeModal();
     });
 }
@@ -668,12 +676,11 @@ function deleteToken(index) {
     const token = state.tokens[index];
     state.tokens.splice(index, 1);
     delete state.tokenOwners[token];
-    renderTokens();
-    updateStats();
-    $('tokenBadge').textContent = state.tokens.length;
-    $('tokenCount').textContent = `${state.tokens.length} token`;
+    
+    updateUI();
     updateRemoteDb();
-    showToast('Token dihapus', 'success');
+    
+    showToast('✅ Token dihapus', 'success');
 }
 
 function addUser() {
@@ -699,17 +706,14 @@ function addUser() {
     };
     
     state.users.push(newUser);
-    renderUsers();
-    renderTokens();
-    updateStats();
-    $('userBadge').textContent = state.users.length;
-    $('userCount').textContent = `${state.users.length} user`;
+    
+    updateUI();
+    updateRemoteDb();
     
     $('addUserName').value = '';
     const newKey = generateKey('');
     $('addUserKey').value = newKey;
     
-    updateRemoteDb();
     showToast(`✅ User ${name} (${role}) berhasil ditambahkan!`, 'success');
 }
 
@@ -774,8 +778,7 @@ function editUser(id) {
             });
         }
         
-        renderUsers();
-        renderTokens();
+        updateUI();
         updateRemoteDb();
         closeModal();
         showToast(`✅ User ${newName} berhasil diupdate!`, 'success');
@@ -812,11 +815,7 @@ function deleteUser(id) {
         });
     }
     
-    renderUsers();
-    renderTokens();
-    updateStats();
-    $('userBadge').textContent = state.users.length;
-    $('userCount').textContent = `${state.users.length} user`;
+    updateUI();
     updateRemoteDb();
     showToast(`✅ User ${user.name} berhasil dihapus!`, 'success');
 }
@@ -869,8 +868,9 @@ window.openModal = openModal;
 window.loadData = loadData;
 window.updateRemoteDb = updateRemoteDb;
 window.copyAccessUrl = copyAccessUrl;
+window.refreshData = refreshData;
 
 console.log('🏗️ BUILD AKSAKA - Panel loaded');
 console.log('📌 Login: admin123 (Owner) | reseller123 (Reseller)');
 console.log('📌 Total: token 0, user 2');
-console.log('📌 Tambah Token: MANUAL (ketik sendiri, TIDAK auto generate)');
+console.log('📌 Tambah Token: MANUAL (ketik sendiri, langsung muncul di website)');
