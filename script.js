@@ -16,10 +16,10 @@
     }
 })();
 
-const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/database.json';
-const GITHUB_REPO = 'YOUR_USERNAME/YOUR_REPO';
+const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Zenithayu/token/refs/heads/main/token.json?token=GHSAT0AAAAAAEAZIP5754ME4J2PE27CRLDK2R3IQOA';
+const GITHUB_REPO = 'token';
 const GITHUB_BRANCH = 'main';
-const GITHUB_PATH = 'database.json';
+const GITHUB_PATH = 'token.json';
 
 const state = {
     currentUser: null,
