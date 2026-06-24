@@ -16,10 +16,10 @@
     }
 })();
 
-const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Zenithayu/token/refs/heads/main/token.json?token=GHSAT0AAAAAAEAZIP5754ME4J2PE27CRLDK2R3IQOA';
-const GITHUB_REPO = 'token';
+const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/database.json';
+const GITHUB_REPO = 'YOUR_USERNAME/YOUR_REPO';
 const GITHUB_BRANCH = 'main';
-const GITHUB_PATH = 'token.json';
+const GITHUB_PATH = 'database.json';
 
 const state = {
     currentUser: null,
@@ -581,7 +581,7 @@ function renderUsers() {
 }
 
 // ============================================================
-// ADD TOKEN - MANUAL (USER KETIK SENDIRI)
+// ADD TOKEN - MANUAL (USER KETIK SENDIRI) - FIX
 // ============================================================
 function showAddTokenModal() {
     const body = `
@@ -609,31 +609,45 @@ function showAddTokenModal() {
     
     openModal('Tambah Token Manual', body);
     
+    // Fokus ke input token
     setTimeout(() => {
         const input = document.getElementById('newTokenInput');
-        if (input) input.focus();
+        if (input) {
+            input.value = ''; // KOSONGKAN - TIDAK ADA AUTO GENERATE
+            input.focus();
+        }
     }, 100);
+    
+    // HAPUS SEMUA AUTO GENERATE
+    // Token diisi MANUAL oleh user
     
     $('btnSaveToken').addEventListener('click', () => {
         const token = $('newTokenInput').value.trim();
         const owner = $('tokenOwnerSelect').value;
         
         if (!token) {
-            showToast('Token tidak boleh kosong!', 'error');
+            showToast('⚠️ Token tidak boleh kosong! Silakan ketik token manual.', 'warning');
             document.getElementById('newTokenInput').focus();
             return;
         }
         
-        // Validasi format token Telegram (opsional)
+        // Validasi format token Telegram
         if (!/^\d+:[A-Za-z0-9_-]{35,}$/.test(token)) {
             showToast('⚠️ Format token tidak valid! Contoh: 1234567890:ABCdef...', 'warning');
             document.getElementById('newTokenInput').focus();
             return;
         }
         
+        // Cek apakah token sudah ada
+        if (state.tokens.includes(token)) {
+            showToast('⚠️ Token sudah ada! Masukkan token yang berbeda.', 'warning');
+            document.getElementById('newTokenInput').focus();
+            return;
+        }
+        
         state.tokens.push(token);
         state.tokenOwners[token] = owner;
-        showToast(`Token berhasil ditambahkan untuk ${owner}!`, 'success');
+        showToast(`✅ Token berhasil ditambahkan untuk ${owner}!`, 'success');
         
         renderTokens();
         updateStats();
@@ -736,7 +750,7 @@ function editUser(id) {
     $('btnEditUserSubmit').addEventListener('click', () => {
         const newName = $('editUserName').value.trim();
         const newKey = $('editUserKey').value.trim();
-        const newRole = $('editUserRole').value();
+        const newRole = $('editUserRole').value;
         
         if (!newName) {
             showToast('Nama tidak boleh kosong!', 'error');
@@ -859,4 +873,4 @@ window.copyAccessUrl = copyAccessUrl;
 console.log('🏗️ BUILD AKSAKA - Panel loaded');
 console.log('📌 Login: admin123 (Owner) | reseller123 (Reseller)');
 console.log('📌 Total: token 0, user 2');
-console.log('📌 Tambah Token: MANUAL (ketik sendiri)');
+console.log('📌 Tambah Token: MANUAL (ketik sendiri, TIDAK auto generate)');
