@@ -551,6 +551,26 @@ body {
     color: var(--primary-light);
 }
 
+.btn-success {
+    padding: 8px 18px;
+    background: var(--success);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-success:hover {
+    background: #00b84a;
+    transform: translateY(-1px);
+}
+
 .btn-danger {
     padding: 8px 18px;
     background: rgba(255,23,68,0.15);
