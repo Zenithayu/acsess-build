@@ -1,19 +1,26 @@
-// ============================================================
-// AKSAKA BOT BUILD - SCRIPT
-// OWNER: Full Akses | RESELLER: Add Token & Add User Only
-// ============================================================
+(function() {
+    const session = localStorage.getItem('aksaka_session');
+    if (!session) {
+        window.location.href = 'login.html';
+        return;
+    }
+    try {
+        const data = JSON.parse(session);
+        if (!data.user) {
+            window.location.href = 'login.html';
+            return;
+        }
+    } catch (e) {
+        window.location.href = 'login.html';
+        return;
+    }
+})();
 
-// ============================================================
-// KONFIGURASI GITHUB - GANTI INI!
-// ============================================================
 const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Zenithayu/token/refs/heads/main/token.json?token=GHSAT0AAAAAAEAZIP5754ME4J2PE27CRLDK2R3IQOA';
 const GITHUB_REPO = 'token';
 const GITHUB_BRANCH = 'main';
 const GITHUB_PATH = 'token.json';
 
-// ============================================================
-// STATE
-// ============================================================
 const state = {
     currentUser: null,
     currentRole: null,
@@ -22,7 +29,6 @@ const state = {
     tokenOwners: {}
 };
 
-// Role levels
 const ROLE_LEVELS = {
     'Reseller': 1,
     'Owner': 2
@@ -30,15 +36,9 @@ const ROLE_LEVELS = {
 
 const ROLE_NAMES = ['Reseller', 'Owner'];
 
-// ============================================================
-// DOM REFS
-// ============================================================
 const $ = (id) => document.getElementById(id);
 const $$ = (sel) => document.querySelectorAll(sel);
 
-// ============================================================
-// GENERATE FUNCTIONS
-// ============================================================
 function generateToken() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let token = '';
@@ -59,16 +59,10 @@ function generateKey(name) {
     return `${clean}_${suffix}`;
 }
 
-// ============================================================
-// GITHUB DATABASE FUNCTIONS
-// ============================================================
 function getGithubToken() {
     return localStorage.getItem('github_token') || '';
 }
 
-// ============================================================
-// LOAD DATA - DARI GITHUB RAW
-// ============================================================
 async function loadData() {
     try {
         const response = await fetch(GITHUB_RAW_URL);
@@ -127,15 +121,11 @@ function setDefaultData() {
     state.tokenOwners[token] = 'Admin AKSAKA';
 }
 
-// ============================================================
-// UPDATE UI BY ROLE
-// ============================================================
 function updateUIByRole() {
     const role = state.currentRole;
     const isOwner = role === 'Owner';
     const isReseller = role === 'Reseller';
     
-    // Sembunyikan menu berdasarkan role
     const navSettings = $('navSettings');
     const btnSyncDb = $('btnSyncDb');
     const btnSaveToGit = $('btnSaveToGit');
@@ -144,15 +134,13 @@ function updateUIByRole() {
     const resellerInfo = $('resellerInfo');
     
     if (isReseller) {
-        // Reseller: sembunyikan settings
         if (navSettings) navSettings.style.display = 'none';
         if (btnSyncDb) btnSyncDb.style.display = 'none';
         if (btnSaveToGit) btnSaveToGit.style.display = 'none';
         if (btnRevokeAll) btnRevokeAll.style.display = 'none';
-        if (btnAddUserPage) btnAddUserPage.style.display = 'inline-flex'; // Bisa tambah user
+        if (btnAddUserPage) btnAddUserPage.style.display = 'inline-flex';
         if (resellerInfo) resellerInfo.style.display = 'block';
         
-        // Tampilkan yang diizinkan
         $('quickAddToken').style.display = 'flex';
         $('quickAddUser').style.display = 'flex';
         $('btnAddToken').style.display = 'inline-flex';
@@ -174,7 +162,6 @@ function updateUIByRole() {
         }
         
     } else if (isOwner) {
-        // Owner: semua akses
         if (navSettings) navSettings.style.display = 'flex';
         if (btnSyncDb) btnSyncDb.style.display = 'inline-flex';
         if (btnSaveToGit) btnSaveToGit.style.display = 'inline-flex';
@@ -203,16 +190,12 @@ function updateUIByRole() {
             });
         }
     } else {
-        // Guest
         $('roleDisplay').textContent = '👤 Guest';
         $('roleDisplay').style.color = '#8888A8';
         if (resellerInfo) resellerInfo.style.display = 'none';
     }
 }
 
-// ============================================================
-// UPDATE DATA KE GITHUB
-// ============================================================
 async function updateRemoteDb() {
     try {
         const token = getGithubToken();
@@ -255,7 +238,7 @@ async function updateRemoteDb() {
                 'Accept': 'application/vnd.github+json'
             },
             body: JSON.stringify({
-                message: 'Update database via panel AKSAKA BOT BUILD',
+                message: 'Update database via panel BUILD AKSAKA',
                 content: content,
                 branch: GITHUB_BRANCH,
                 sha: sha || undefined
@@ -276,9 +259,6 @@ async function updateRemoteDb() {
     }
 }
 
-// ============================================================
-// INIT
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     const savedToken = localStorage.getItem('github_token');
     if (savedToken) {
@@ -297,9 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadData();
 });
 
-// ============================================================
-// CHECK LOGIN
-// ============================================================
 function checkLogin() {
     const saved = localStorage.getItem('aksaka_session');
     if (saved) {
@@ -328,9 +305,6 @@ function updateUserUI() {
     }
 }
 
-// ============================================================
-// UPDATE ACCESS PAGE
-// ============================================================
 function updateAccessPage() {
     if (state.currentUser) {
         $('myName').textContent = state.currentUser.name || '-';
@@ -357,73 +331,6 @@ function copyAccessUrl() {
     });
 }
 
-// ============================================================
-// LOGIN
-// ============================================================
-function showLogin() {
-    const body = `
-        <div class="form-group">
-            <label>Key Login</label>
-            <input type="text" id="loginKey" placeholder="Masukkan key login..." class="form-control">
-        </div>
-        <button class="btn-primary" id="btnLoginSubmit" style="width:100%; justify-content:center;">
-            <i class="fas fa-sign-in-alt"></i> Login
-        </button>
-        <div style="margin-top:12px; text-align:center; font-size:12px; color:var(--text-secondary);">
-            <p>Login Demo:</p>
-            <p>Owner: <code>admin123</code> atau <code>admin</code></p>
-            <p>Reseller: <code>reseller123</code> atau <code>reseller</code></p>
-        </div>
-    `;
-    
-    openModal('Login - AKSAKA BOT BUILD', body);
-    
-    $('btnLoginSubmit').addEventListener('click', () => {
-        const key = $('loginKey').value.trim();
-        
-        const user = state.users.find(u => u.key === key);
-        
-        if (user) {
-            state.currentUser = user;
-            state.currentRole = user.role;
-            localStorage.setItem('aksaka_session', JSON.stringify({
-                user: user,
-                role: user.role
-            }));
-            closeModal();
-            updateUserUI();
-            loadData();
-            showToast(`Selamat datang, ${user.name}! (${user.role})`, 'success');
-        } else {
-            const demos = {
-                'admin': { name: 'Admin', role: 'Owner' },
-                'reseller': { name: 'Reseller 1', role: 'Reseller' }
-            };
-            
-            if (demos[key]) {
-                const demoUser = {
-                    id: `user_${Date.now()}`,
-                    name: demos[key].name,
-                    key: key,
-                    role: demos[key].role
-                };
-                state.currentUser = demoUser;
-                state.currentRole = demoUser.role;
-                localStorage.setItem('aksaka_session', JSON.stringify({
-                    user: demoUser,
-                    role: demoUser.role
-                }));
-                closeModal();
-                updateUserUI();
-                loadData();
-                showToast(`Selamat datang, ${demoUser.name}! (${demoUser.role})`, 'success');
-            } else {
-                showToast('Key tidak valid!', 'error');
-            }
-        }
-    });
-}
-
 function logout() {
     localStorage.removeItem('aksaka_session');
     state.currentUser = null;
@@ -439,9 +346,6 @@ function logout() {
     loadData();
 }
 
-// ============================================================
-// SETUP EVENT LISTENERS
-// ============================================================
 function setupEventListeners() {
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', () => {
@@ -482,7 +386,6 @@ function setupEventListeners() {
         showToast('Data user diperbarui', 'success');
     });
     
-    $('btnLogin').addEventListener('click', showLogin);
     $('btnLogoutSmall').addEventListener('click', logout);
     $('btnLogoutHeader').addEventListener('click', logout);
     
@@ -501,7 +404,6 @@ function setupEventListeners() {
         showAddTokenModal();
     });
     
-    // ===== TAMBAH USER (SEMUA ROLE BISA) =====
     $('btnAddUserPage').addEventListener('click', () => {
         if (!state.currentUser) {
             showToast('Silakan login terlebih dahulu!', 'error');
@@ -540,7 +442,6 @@ function setupEventListeners() {
         }
     });
     
-    // ===== SAVE TO GITHUB (HANYA OWNER) =====
     $('btnSaveToGit').addEventListener('click', async () => {
         if (state.currentRole !== 'Owner') {
             showToast('❌ Hanya Owner!', 'error');
@@ -560,7 +461,6 @@ function setupEventListeners() {
         await updateRemoteDb();
     });
     
-    // ===== SYNC DB (HANYA OWNER) =====
     $('btnSyncDb').addEventListener('click', async () => {
         if (state.currentRole !== 'Owner') {
             showToast('❌ Hanya Owner!', 'error');
@@ -570,7 +470,6 @@ function setupEventListeners() {
         showToast('Database berhasil disinkronisasi dari GitHub!', 'success');
     });
     
-    // ===== REVOKE ALL (HANYA OWNER) =====
     $('btnRevokeAll').addEventListener('click', () => {
         if (state.currentRole !== 'Owner') {
             showToast('❌ Hanya Owner!', 'error');
@@ -608,17 +507,11 @@ function setupEventListeners() {
     });
 }
 
-// ============================================================
-// UPDATE STATS
-// ============================================================
 function updateStats() {
     $('totalTokens').textContent = state.tokens.length;
     $('totalUsers').textContent = state.users.length;
 }
 
-// ============================================================
-// RENDER TOKENS
-// ============================================================
 function renderTokens() {
     const grid = $('tokenGrid');
     if (state.tokens.length === 0) {
@@ -655,9 +548,6 @@ function renderTokens() {
     }
 }
 
-// ============================================================
-// RENDER USERS - HANYA OWNER YANG BISA HAPUS/EDIT USER
-// ============================================================
 function renderUsers() {
     const tbody = $('userTableBody');
     if (state.users.length === 0) {
@@ -702,9 +592,6 @@ function renderUsers() {
     `}).join('');
 }
 
-// ============================================================
-// ADD TOKEN (SEMUA ROLE BISA)
-// ============================================================
 function showAddTokenModal() {
     const body = `
         <div class="form-group">
@@ -781,9 +668,6 @@ function deleteToken(index) {
     showToast('Token dihapus', 'success');
 }
 
-// ============================================================
-// ADD USER (SEMUA ROLE BISA)
-// ============================================================
 function addUser() {
     const name = $('addUserName').value.trim();
     const key = $('addUserKey').value.trim();
@@ -821,9 +705,6 @@ function addUser() {
     showToast(`✅ User ${name} (${role}) berhasil ditambahkan!`, 'success');
 }
 
-// ============================================================
-// EDIT USER (HANYA OWNER)
-// ============================================================
 function editUser(id) {
     if (state.currentRole !== 'Owner') {
         showToast('❌ Hanya Owner yang bisa mengedit user!', 'error');
@@ -893,9 +774,6 @@ function editUser(id) {
     });
 }
 
-// ============================================================
-// DELETE USER (HANYA OWNER)
-// ============================================================
 function deleteUser(id) {
     if (state.currentRole !== 'Owner') {
         showToast('❌ Hanya Owner yang bisa menghapus user!', 'error');
@@ -935,9 +813,6 @@ function deleteUser(id) {
     showToast(`✅ User ${user.name} berhasil dihapus!`, 'success');
 }
 
-// ============================================================
-// MODAL
-// ============================================================
 function openModal(title, body) {
     $('modalTitle').textContent = title;
     $('modalBody').innerHTML = body;
@@ -948,9 +823,6 @@ function closeModal() {
     document.getElementById('modal').classList.remove('active');
 }
 
-// ============================================================
-// TOAST
-// ============================================================
 function showToast(message, type = 'info') {
     const existing = document.querySelector('.toast-container');
     if (existing) existing.remove();
@@ -980,9 +852,6 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-// ============================================================
-// EXPOSE GLOBALS
-// ============================================================
 window.deleteToken = deleteToken;
 window.deleteUser = deleteUser;
 window.editUser = editUser;
@@ -995,8 +864,6 @@ window.generateKey = generateKey;
 window.updateRemoteDb = updateRemoteDb;
 window.copyAccessUrl = copyAccessUrl;
 
-console.log('🏗️ AKSAKA BOT BUILD - Panel loaded');
+console.log('🏗️ BUILD AKSAKA - Panel loaded');
 console.log('📌 Login: admin123 (Owner) | reseller123 (Reseller)');
 console.log('📌 Total: 1 token, 2 user');
-console.log('📌 Terhubung dengan GitHub: ' + GITHUB_RAW_URL);
-console.log('📌 Aturan: Owner = Full Akses | Reseller = Add Token + Add User');
