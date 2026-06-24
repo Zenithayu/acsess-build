@@ -41,30 +41,34 @@
                 <i class="fas fa-th-large"></i>
                 <span>Dashboard</span>
             </a>
-            <a href="#" class="nav-item" data-page="tokens">
+            <a href="#" class="nav-item" data-page="tokens" id="navTokens">
                 <i class="fas fa-key"></i>
                 <span>Daftar Token</span>
                 <span class="nav-badge" id="tokenBadge">0</span>
             </a>
-            <a href="#" class="nav-item" data-page="users">
+            <a href="#" class="nav-item" data-page="users" id="navUsers">
                 <i class="fas fa-users"></i>
                 <span>Kelola User</span>
                 <span class="nav-badge" id="userBadge">0</span>
             </a>
-            <a href="#" class="nav-item" data-page="adduser">
+            <a href="#" class="nav-item" data-page="adduser" id="navAddUser">
                 <i class="fas fa-user-plus"></i>
                 <span>Tambah User</span>
             </a>
-            <a href="#" class="nav-item" data-page="settings">
+            <a href="#" class="nav-item" data-page="settings" id="navSettings">
                 <i class="fas fa-cog"></i>
                 <span>Pengaturan</span>
+            </a>
+            <a href="#" class="nav-item" data-page="myaccess" id="navMyAccess">
+                <i class="fas fa-key"></i>
+                <span>Akses Saya</span>
             </a>
         </nav>
 
         <div class="sidebar-footer">
             <div class="role-info">
                 <i class="fas fa-shield-alt"></i>
-                <span id="roleLevelDisplay">Role Level: 0</span>
+                <span id="roleLevelDisplay">Role: Belum Login</span>
             </div>
             <button class="btn-login" id="btnLogin">Login</button>
         </div>
@@ -119,8 +123,8 @@
                             <i class="fas fa-shield-alt"></i>
                         </div>
                         <div class="stat-info">
-                            <span class="stat-label">ROLE LEVEL</span>
-                            <span class="stat-value" id="roleLevel">0</span>
+                            <span class="stat-label">ROLE</span>
+                            <span class="stat-value" id="roleDisplay">Guest</span>
                         </div>
                     </div>
                 </div>
@@ -156,7 +160,7 @@
                 </div>
                 <div class="token-hint">
                     <i class="fas fa-info-circle"></i>
-                    Hapus token: klik <span class="icon-example">✖</span> di samping token (min. Reseller)
+                    Hapus token: klik <span class="icon-example">✖</span> di samping token
                 </div>
             </div>
 
@@ -192,6 +196,12 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="info-banner" id="resellerInfo" style="display:none; margin-top:12px; padding:12px; background:rgba(41,121,255,0.08); border-radius:8px; border:1px solid rgba(41,121,255,0.15);">
+                    <i class="fas fa-info-circle" style="color:var(--info);"></i>
+                    <span style="color:var(--text-secondary); font-size:13px; margin-left:8px;">
+                        🔒 Anda login sebagai <strong>Reseller</strong>. Hanya bisa melihat data user.
+                    </span>
+                </div>
             </div>
 
             <!-- ===== TAMBAH USER ===== -->
@@ -213,11 +223,8 @@
                         <div class="form-group">
                             <label>Role</label>
                             <select id="addUserRole" class="form-control">
-                                <option value="Full Up">Full Up</option>
                                 <option value="Reseller">Reseller</option>
                                 <option value="Owner">Owner</option>
-                                <option value="Owner VIP">Owner VIP</option>
-                                <option value="Developer">Developer</option>
                             </select>
                         </div>
                         <div class="form-hint">
@@ -228,6 +235,47 @@
                             <i class="fas fa-plus"></i> Tambah User
                         </button>
                     </div>
+                </div>
+            </div>
+
+            <!-- ===== AKSES SAYA ===== -->
+            <div class="page" id="page-myaccess">
+                <div class="page-header">
+                    <h2>Akses Saya</h2>
+                    <p>Informasi akses dan key login Anda</p>
+                </div>
+                <div class="access-card">
+                    <div class="access-item">
+                        <span class="access-label">👤 Nama</span>
+                        <span class="access-value" id="myName">-</span>
+                    </div>
+                    <div class="access-item">
+                        <span class="access-label">🔑 Key Login</span>
+                        <span class="access-value" id="myKey">-</span>
+                    </div>
+                    <div class="access-item">
+                        <span class="access-label">🛡️ Role</span>
+                        <span class="access-value" id="myRole">-</span>
+                    </div>
+                    <div class="access-item">
+                        <span class="access-label">📊 Level</span>
+                        <span class="access-value" id="myLevel">-</span>
+                    </div>
+                    <div class="access-item">
+                        <span class="access-label">📅 Bergabung</span>
+                        <span class="access-value" id="myJoined">-</span>
+                    </div>
+                    <div class="access-item" style="border-bottom: none;">
+                        <span class="access-label">🔗 URL Akses</span>
+                        <span class="access-value" style="font-size:12px; word-break:break-all;">
+                            <code id="myAccessUrl">https://panel.aksaka.com</code>
+                        </span>
+                    </div>
+                </div>
+                <div class="access-actions">
+                    <button class="btn-primary" id="btnCopyAccess" onclick="copyAccessUrl()">
+                        <i class="fas fa-copy"></i> Copy URL Akses
+                    </button>
                 </div>
             </div>
 
