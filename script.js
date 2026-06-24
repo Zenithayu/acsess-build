@@ -39,16 +39,6 @@ const ROLE_NAMES = ['Reseller', 'Owner'];
 const $ = (id) => document.getElementById(id);
 const $$ = (sel) => document.querySelectorAll(sel);
 
-function generateToken() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let token = '';
-    for (let i = 0; i < 8; i++) {
-        token += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    const numbers = Math.floor(10000000 + Math.random() * 90000000);
-    return `${numbers}...${token}`;
-}
-
 function generateUserId() {
     return `user_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
 }
@@ -85,9 +75,8 @@ async function loadData() {
                     state.tokenOwners[t.token] = t.owner;
                 });
             } else {
-                const token = generateToken();
-                state.tokens = [token];
-                state.tokenOwners[token] = 'Admin AKSAKA';
+                state.tokens = [];
+                state.tokenOwners = {};
             }
             
             console.log('✅ Data berhasil diambil dari GitHub');
@@ -116,9 +105,8 @@ function setDefaultData() {
         { id: 'user_1700000000000', name: 'Admin AKSAKA', key: 'admin123', role: 'Owner' },
         { id: 'user_1700000000001', name: 'Reseller 1', key: 'reseller123', role: 'Reseller' },
     ];
-    const token = generateToken();
-    state.tokens = [token];
-    state.tokenOwners[token] = 'Admin AKSAKA';
+    state.tokens = [];
+    state.tokenOwners = {};
 }
 
 function updateUIByRole() {
@@ -139,7 +127,6 @@ function updateUIByRole() {
         if (btnRevokeAll) btnRevokeAll.style.display = 'none';
         if (resellerInfo) resellerInfo.style.display = 'block';
         
-        // SEMUA ROLE BISA ADD TOKEN & ADD USER
         $('quickAddToken').style.display = 'flex';
         $('quickAddUser').style.display = 'flex';
         $('btnAddToken').style.display = 'inline-flex';
@@ -387,7 +374,7 @@ function setupEventListeners() {
     $('btnLogoutSmall').addEventListener('click', logout);
     $('btnLogoutHeader').addEventListener('click', logout);
     
-    // ===== ADD TOKEN (SEMUA ROLE BISA) =====
+    // ===== ADD TOKEN (SEMUA ROLE BISA - MANUAL) =====
     $('btnAddToken').addEventListener('click', () => {
         if (!state.currentUser) {
             showToast('Silakan login terlebih dahulu!', 'error');
@@ -593,11 +580,17 @@ function renderUsers() {
     `}).join('');
 }
 
+// ============================================================
+// ADD TOKEN - MANUAL (USER KETIK SENDIRI)
+// ============================================================
 function showAddTokenModal() {
     const body = `
         <div class="form-group">
             <label>Token Baru</label>
-            <input type="text" id="newTokenInput" placeholder="Token akan digenerate otomatis..." class="form-control" readonly>
+            <input type="text" id="newTokenInput" placeholder="Masukkan token manual..." class="form-control">
+            <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">
+                Contoh: <code>1234567890:ABCdefGHIjklMNOpqrsTUVwxyz</code>
+            </div>
         </div>
         <div class="form-group">
             <label>Pemilik Token</label>
@@ -607,27 +600,19 @@ function showAddTokenModal() {
         </div>
         <div class="form-hint">
             <i class="fas fa-info-circle"></i>
-            Setiap user bisa memiliki banyak token
+            Token bisa diisi manual sesuai token dari @BotFather
         </div>
         <button class="btn-primary" id="btnSaveToken" style="width:100%; justify-content:center;">
-            <i class="fas fa-plus"></i> Tambah
+            <i class="fas fa-save"></i> Simpan Token
         </button>
     `;
     
-    openModal('Tambah Token', body);
+    openModal('Tambah Token Manual', body);
     
-    const newToken = generateToken();
-    $('newTokenInput').value = newToken;
-    
-    if (state.currentUser) {
-        const select = $('tokenOwnerSelect');
-        for (let opt of select.options) {
-            if (opt.value === state.currentUser.name) {
-                select.value = opt.value;
-                break;
-            }
-        }
-    }
+    setTimeout(() => {
+        const input = document.getElementById('newTokenInput');
+        if (input) input.focus();
+    }, 100);
     
     $('btnSaveToken').addEventListener('click', () => {
         const token = $('newTokenInput').value.trim();
@@ -635,6 +620,14 @@ function showAddTokenModal() {
         
         if (!token) {
             showToast('Token tidak boleh kosong!', 'error');
+            document.getElementById('newTokenInput').focus();
+            return;
+        }
+        
+        // Validasi format token Telegram (opsional)
+        if (!/^\d+:[A-Za-z0-9_-]{35,}$/.test(token)) {
+            showToast('⚠️ Format token tidak valid! Contoh: 1234567890:ABCdef...', 'warning');
+            document.getElementById('newTokenInput').focus();
             return;
         }
         
@@ -743,7 +736,7 @@ function editUser(id) {
     $('btnEditUserSubmit').addEventListener('click', () => {
         const newName = $('editUserName').value.trim();
         const newKey = $('editUserKey').value.trim();
-        const newRole = $('editUserRole').value;
+        const newRole = $('editUserRole').value();
         
         if (!newName) {
             showToast('Nama tidak boleh kosong!', 'error');
@@ -860,12 +853,10 @@ window.showToast = showToast;
 window.closeModal = closeModal;
 window.openModal = openModal;
 window.loadData = loadData;
-window.generateToken = generateToken;
-window.generateKey = generateKey;
 window.updateRemoteDb = updateRemoteDb;
 window.copyAccessUrl = copyAccessUrl;
 
 console.log('🏗️ BUILD AKSAKA - Panel loaded');
 console.log('📌 Login: admin123 (Owner) | reseller123 (Reseller)');
-console.log('📌 Total: 1 token, 2 user');
-console.log('📌 Semua Role: Bisa Add Token & Add User');
+console.log('📌 Total: token 0, user 2');
+console.log('📌 Tambah Token: MANUAL (ketik sendiri)');
