@@ -16,10 +16,10 @@
     }
 })();
 
-const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Zenithayu/token/refs/heads/main/token.json?token=GHSAT0AAAAAAEAZIP5754ME4J2PE27CRLDK2R3IQOA';
-const GITHUB_REPO = 'token';
+const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/database.json';
+const GITHUB_REPO = 'YOUR_USERNAME/YOUR_REPO';
 const GITHUB_BRANCH = 'main';
-const GITHUB_PATH = 'token.json';
+const GITHUB_PATH = 'database.json';
 
 const state = {
     currentUser: null,
@@ -130,7 +130,6 @@ function updateUIByRole() {
     const btnSyncDb = $('btnSyncDb');
     const btnSaveToGit = $('btnSaveToGit');
     const btnRevokeAll = $('btnRevokeAll');
-    const btnAddUserPage = $('btnAddUserPage');
     const resellerInfo = $('resellerInfo');
     
     if (isReseller) {
@@ -138,9 +137,9 @@ function updateUIByRole() {
         if (btnSyncDb) btnSyncDb.style.display = 'none';
         if (btnSaveToGit) btnSaveToGit.style.display = 'none';
         if (btnRevokeAll) btnRevokeAll.style.display = 'none';
-        if (btnAddUserPage) btnAddUserPage.style.display = 'inline-flex';
         if (resellerInfo) resellerInfo.style.display = 'block';
         
+        // SEMUA ROLE BISA ADD TOKEN & ADD USER
         $('quickAddToken').style.display = 'flex';
         $('quickAddUser').style.display = 'flex';
         $('btnAddToken').style.display = 'inline-flex';
@@ -166,7 +165,6 @@ function updateUIByRole() {
         if (btnSyncDb) btnSyncDb.style.display = 'inline-flex';
         if (btnSaveToGit) btnSaveToGit.style.display = 'inline-flex';
         if (btnRevokeAll) btnRevokeAll.style.display = 'inline-flex';
-        if (btnAddUserPage) btnAddUserPage.style.display = 'inline-flex';
         if (resellerInfo) resellerInfo.style.display = 'none';
         
         $('quickAddToken').style.display = 'flex';
@@ -389,6 +387,7 @@ function setupEventListeners() {
     $('btnLogoutSmall').addEventListener('click', logout);
     $('btnLogoutHeader').addEventListener('click', logout);
     
+    // ===== ADD TOKEN (SEMUA ROLE BISA) =====
     $('btnAddToken').addEventListener('click', () => {
         if (!state.currentUser) {
             showToast('Silakan login terlebih dahulu!', 'error');
@@ -404,6 +403,7 @@ function setupEventListeners() {
         showAddTokenModal();
     });
     
+    // ===== ADD USER (SEMUA ROLE BISA) =====
     $('btnAddUserPage').addEventListener('click', () => {
         if (!state.currentUser) {
             showToast('Silakan login terlebih dahulu!', 'error');
@@ -442,6 +442,7 @@ function setupEventListeners() {
         }
     });
     
+    // ===== SETTINGS (HANYA OWNER) =====
     $('btnSaveToGit').addEventListener('click', async () => {
         if (state.currentRole !== 'Owner') {
             showToast('❌ Hanya Owner!', 'error');
@@ -867,3 +868,4 @@ window.copyAccessUrl = copyAccessUrl;
 console.log('🏗️ BUILD AKSAKA - Panel loaded');
 console.log('📌 Login: admin123 (Owner) | reseller123 (Reseller)');
 console.log('📌 Total: 1 token, 2 user');
+console.log('📌 Semua Role: Bisa Add Token & Add User');
